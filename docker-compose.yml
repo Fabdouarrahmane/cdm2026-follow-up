@@ -19,20 +19,17 @@ services:
       context: ./docker/php
     volumes:
       - ./backend:/var/www/html
-    environment:
-      DATABASE_URL: mysql://cdm_user:cdm_password@db:3306/cdm2026
 
   db:
     image: mariadb:10.11
+    container_name: cdm2026_db
     environment:
-      MYSQL_ROOT_PASSWORD: root_password
-      MYSQL_DATABASE: cdm2026
-      MYSQL_USER: cdm_user
-      MYSQL_PASSWORD: cdm_password
+      MYSQL_ROOT_PASSWORD: "Root2026SecurePass"
+      MYSQL_DATABASE: "cdm2026"
+      MYSQL_USER: "cdm_user"
+      MYSQL_PASSWORD: "CdmUser2026SecurePass"
     volumes:
       - db_data:/var/lib/mysql
-    ports:
-      - "3307:3306"
 
 volumes:
   caddy_data:

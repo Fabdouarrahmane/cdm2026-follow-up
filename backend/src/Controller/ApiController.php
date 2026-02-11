@@ -2,18 +2,19 @@
 
 namespace App\Controller;
 
-use App\Repository\PhaseRepository;
 use App\Repository\MatcheRepository;
+use App\Repository\PhaseRepository;
+use App\Validator\MatchValidator;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Psr\Log\LoggerInterface;
 
-#[Route('/api', name: 'api_')]
 class ApiController extends AbstractController
 {
-    // GET /api/phases - Liste des phases
-    #[Route('/phases', name: 'phases', methods: ['GET'])]
+    #[Route('/api/phases', name: 'api_phases', methods: ['GET'])]
     public function getPhases(PhaseRepository $phaseRepository): JsonResponse
     {
         $phases = $phaseRepository->findBy([], ['ordre' => 'ASC']);
@@ -30,13 +31,18 @@ class ApiController extends AbstractController
         return $this->json($data);
     }
 
-    // GET /api/matches?phase=1 - Liste des matchs d'une phase
-    #[Route('/matches', name: 'matches_list', methods: ['GET'])]
-    public function getMatches(Request $request, MatcheRepository $matcheRepository): JsonResponse
+    #[Route('/api/matches', name: 'api_matches_list', methods: ['GET'])]
+    public function getMatches(Request $request, MatcheRepository $matcheRepository, LoggerInterface $logger): JsonResponse
     {
         $phaseId = $request->query->get('phase');
 
-        if ($phaseId) {
+        // ✅ VALIDATION
+        if ($phaseId !== null) {
+            $phaseId = (int) $phaseId;
+            if (!MatchValidator::validatePhaseId($phaseId)) {
+                $logger->warning('Tentative d\'accès avec Phase ID invalide', ['phase_id' => $phaseId]);
+                return $this->json(['error' => 'Phase ID invalide'], Response::HTTP_BAD_REQUEST);
+            }
             $matches = $matcheRepository->findBy(['phase' => $phaseId], ['dateHeure' => 'ASC']);
         } else {
             $matches = $matcheRepository->findBy([], ['dateHeure' => 'ASC']);
@@ -87,14 +93,19 @@ class ApiController extends AbstractController
         return $this->json($data);
     }
 
-    // GET /api/matches/{id} - Détail d'un match
-    #[Route('/matches/{id}', name: 'match_detail', methods: ['GET'])]
-    public function getMatch(int $id, MatcheRepository $matcheRepository): JsonResponse
+    #[Route('/api/matches/{id}', name: 'api_match_detail', methods: ['GET'])]
+    public function getMatch(int $id, MatcheRepository $matcheRepository, LoggerInterface $logger): JsonResponse
     {
+        // ✅ VALIDATION
+        if (!MatchValidator::validateMatchId($id)) {
+            $logger->warning('Tentative d\'accès avec Match ID invalide', ['match_id' => $id]);
+            return $this->json(['error' => 'Match ID invalide'], Response::HTTP_BAD_REQUEST);
+        }
+
         $match = $matcheRepository->find($id);
 
         if (!$match) {
-            return $this->json(['error' => 'Match non trouvé'], 404);
+            return $this->json(['error' => 'Match non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
         $data = [
@@ -127,7 +138,6 @@ class ApiController extends AbstractController
                     'termineLe' => $scoreFinal->getTermineLe()->format('Y-m-d H:i:s'),
                 ];
             } else {
-                // Simulation pour LIVE
                 $data['score'] = [
                     'scoreA' => rand(0, 3),
                     'scoreB' => rand(0, 3),

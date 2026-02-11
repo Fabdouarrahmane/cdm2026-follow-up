@@ -1,0 +1,10 @@
+:80 {
+    root * /var/www/html/public
+    php_fastcgi php:9000
+    file_server
+
+    encode gzip
+
+# Gestion des routes Symfony
+    try_files {path} /index.php?{query}
+}

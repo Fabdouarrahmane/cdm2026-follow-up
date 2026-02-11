@@ -55,12 +55,12 @@ class ScoreFinal
         return $this;
     }
 
-    public function getTermineLe(): ?\DateTime
+    public function getTermineLe(): ?\DateTimeImmutable
     {
         return $this->termineLe;
     }
 
-    public function setTermineLe(\DateTime $termineLe): static
+    public function setTermineLe(\DateTimeImmutable $termineLe): static
     {
         $this->termineLe = $termineLe;
 

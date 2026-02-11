@@ -39,12 +39,12 @@ class Matche
         return $this->id;
     }
 
-    public function getDateHeure(): ?\DateTime
+    public function getDateHeure(): \DateTimeImmutable
     {
         return $this->dateHeure;
     }
 
-    public function setDateHeure(\DateTime $dateHeure): static
+    public function setDateHeure(\DateTimeImmutable $dateHeure): static
     {
         $this->dateHeure = $dateHeure;
 
